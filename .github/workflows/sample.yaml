@@ -65,7 +65,7 @@ jobs:
       - run: echo "Vue build process with run number ${{ needs.set-run-number.outputs.run_number }}"
 
   deploy:
-    needs: [front-build, core-build, vue-build]
+    needs: [set-run-number, front-build, core-build, vue-build]
     runs-on: ubuntu-latest
     steps:
       - name: Deploy Front
@@ -79,5 +79,4 @@ jobs:
       - name: Deploy Vue
         if: ${{ github.event.inputs.vue_action == 'deploy' || github.event.inputs.vue_action == 'build and deploy' }}
         run: echo "Vue deploy process with run number ${{ needs.set-run-number.outputs.run_number }}"
-
 
