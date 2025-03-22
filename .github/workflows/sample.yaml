@@ -33,6 +33,16 @@ on:
           - build and deploy
           - build
           - deploy
+      batch_action:
+        type: choice
+        description: 'Batch action'
+        required: true
+        default: 'none'
+        options:
+          - none
+          - build and deploy
+          - build
+          - deploy
 
 jobs:
   set-run-number:
@@ -64,6 +74,13 @@ jobs:
     steps:
       - run: echo "Vue build process with run number ${{ needs.set-run-number.outputs.run_number }}"
 
+  batch-build:
+    needs: [set-run-number, core-build]
+    if: ${{ github.event.inputs.batch_action == 'build' || github.event.inputs.batch_action == 'build and deploy' }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Batch build process with run number ${{ needs.set-run-number.outputs.run_number }}"
+
   deploy:
     needs: [set-run-number, front-build, core-build, vue-build]
     runs-on: ubuntu-latest
@@ -78,5 +95,9 @@ jobs:
       
       - name: Deploy Vue
         if: ${{ github.event.inputs.vue_action == 'deploy' || github.event.inputs.vue_action == 'build and deploy' }}
+        run: echo "Vue deploy process with run number ${{ needs.set-run-number.outputs.run_number }}"
+      
+      - name: Deploy Batch
+        if: ${{ github.event.inputs.batch_action == 'deploy' || github.event.inputs.batch_action == 'build and deploy' }}
         run: echo "Vue deploy process with run number ${{ needs.set-run-number.outputs.run_number }}"
 
