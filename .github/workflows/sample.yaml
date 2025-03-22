@@ -82,7 +82,12 @@ jobs:
       - run: echo "Batch build process with run number ${{ needs.set-run-number.outputs.run_number }}"
 
   deploy:
-    needs: set-run-number
+    needs: [set-run-number]
+    if: |
+      contains(github.event.inputs.front_action, 'deploy') ||
+      contains(github.event.inputs.core_action, 'deploy') ||
+      contains(github.event.inputs.vue_action, 'deploy') ||
+      contains(github.event.inputs.batch_action, 'deploy')
     runs-on: ubuntu-latest
     steps:
       - name: Deploy Front
