@@ -25,7 +25,7 @@ on:
           - deploy
       vue_action:
         type: choice
-        description: 'Vue action'
+        description: 'Vue action(If Build, Needs Front Build)'
         required: true
         default: 'none'
         options:
@@ -35,7 +35,7 @@ on:
           - deploy
       batch_action:
         type: choice
-        description: 'Batch action'
+        description: 'Batch action(If Build, Needs Core Build)'
         required: true
         default: 'none'
         options:
