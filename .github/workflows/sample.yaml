@@ -83,11 +83,7 @@ jobs:
 
   deploy:
     needs: [set-run-number, front-build, core-build, vue-build, batch-build]
-    if: |
-      contains(github.event.inputs.front_action, 'deploy') ||
-      contains(github.event.inputs.core_action, 'deploy') ||
-      contains(github.event.inputs.vue_action, 'deploy') ||
-      contains(github.event.inputs.batch_action, 'deploy')
+    if: ${{ ! failure() }}
     runs-on: ubuntu-latest
     steps:
       - name: Deploy Front
