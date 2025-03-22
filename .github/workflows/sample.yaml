@@ -82,7 +82,7 @@ jobs:
       - run: echo "Batch build process with run number ${{ needs.set-run-number.outputs.run_number }}"
 
   deploy:
-    needs: [set-run-number]
+    needs: [set-run-number, front-build, core-build, vue-build, batch-build]
     if: |
       contains(github.event.inputs.front_action, 'deploy') ||
       contains(github.event.inputs.core_action, 'deploy') ||
