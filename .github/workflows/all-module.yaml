@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       target_modules:
-        description: 'Select modules to build/deploy (comma-separated:\n web,vue,front,core,form,batch,card-systems)'
+        description: 'Select modules to build/deploy \n(comma-separated:\n web,vue,front,core,form,batch,card-systems)'
         required: true
         type: string
       action_type:
