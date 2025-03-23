@@ -63,7 +63,13 @@ jobs:
 
   build_card_systems:
     needs: generate_tag
-    if: contains(inputs.target_modules, 'card-systems') && contains(inputs.action_type, 'build')
+    if: |
+      needs.generate_tag.result == 'success' &&
+      (contains(inputs.target_modules, 'card-systems') ||
+        contains(inputs.target_modules, 'front') ||
+        contains(inputs.target_modules, 'core') ||
+        contains(inputs.target_modules, 'batch')) &&
+      contains(inputs.action_type, 'build')
     uses: ./.github/workflows/build-card-systems.yaml
     with:
       tag_number: ${{ needs.generate_tag.outputs.tag_number }}
