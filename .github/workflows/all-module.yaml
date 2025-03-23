@@ -69,7 +69,8 @@ jobs:
         contains(inputs.target_modules, 'front') ||
         contains(inputs.target_modules, 'core') ||
         contains(inputs.target_modules, 'batch')) &&
-      contains(inputs.action_type, 'build')
+      contains(inputs.action_type, 'build') &&
+      !contains(inputs.tag_numbers, 'card-systems:')
     uses: ./.github/workflows/build-card-systems.yaml
     with:
       tag_number: ${{ needs.generate_tag.outputs.tag_number }}
@@ -77,7 +78,10 @@ jobs:
 
   build_core:
     needs: [generate_tag, build_card_systems]
-    if: contains(inputs.target_modules, 'core') && contains(inputs.action_type, 'build')
+    if: |
+      contains(inputs.target_modules, 'core') && 
+      contains(inputs.action_type, 'build') &&
+      !contains(inputs.tag_numbers, 'core:')
     uses: ./.github/workflows/build-core.yaml
     with:
       tag_number: ${{ needs.generate_tag.outputs.tag_number }}
@@ -85,7 +89,10 @@ jobs:
 
   build_form:
     needs: [generate_tag, build_core]
-    if: contains(inputs.target_modules, 'form') && contains(inputs.action_type, 'build')
+    if: |
+      contains(inputs.target_modules, 'form') && 
+      contains(inputs.action_type, 'build') &&
+      !contains(inputs.tag_numbers, 'form:')
     uses: ./.github/workflows/build-form.yaml
     with:
       tag_number: ${{ needs.generate_tag.outputs.tag_number }}
@@ -93,7 +100,10 @@ jobs:
 
   build_front:
     needs: [generate_tag, build_card_systems]
-    if: contains(inputs.target_modules, 'front') && contains(inputs.action_type, 'build')
+    if: |
+      contains(inputs.target_modules, 'front') && 
+      contains(inputs.action_type, 'build') &&
+      !contains(inputs.tag_numbers, 'front:')
     uses: ./.github/workflows/build-front.yaml
     with:
       tag_number: ${{ needs.generate_tag.outputs.tag_number }}
@@ -101,7 +111,10 @@ jobs:
 
   build_vue:
     needs: generate_tag
-    if: contains(inputs.target_modules, 'vue') && contains(inputs.action_type, 'build')
+    if: |
+      contains(inputs.target_modules, 'vue') && 
+      contains(inputs.action_type, 'build') &&
+      !contains(inputs.tag_numbers, 'vue:')
     uses: ./.github/workflows/build-vue.yaml
     with:
       tag_number: ${{ needs.generate_tag.outputs.tag_number }}
@@ -109,7 +122,10 @@ jobs:
 
   build_web:
     needs: generate_tag
-    if: contains(inputs.target_modules, 'web') && contains(inputs.action_type, 'build')
+    if: |
+      contains(inputs.target_modules, 'web') && 
+      contains(inputs.action_type, 'build') &&
+      !contains(inputs.tag_numbers, 'web:')
     uses: ./.github/workflows/build-web.yaml
     with:
       tag_number: ${{ needs.generate_tag.outputs.tag_number }}
@@ -117,7 +133,10 @@ jobs:
 
   build_batch:
     needs: [generate_tag, build_card_systems]
-    if: contains(inputs.target_modules, 'batch') && contains(inputs.action_type, 'build')
+    if: |
+      contains(inputs.target_modules, 'batch') && 
+      contains(inputs.action_type, 'build') &&
+      !contains(inputs.tag_numbers, 'batch:')
     uses: ./.github/workflows/build-batch.yaml
     with:
       tag_number: ${{ needs.generate_tag.outputs.tag_number }}
