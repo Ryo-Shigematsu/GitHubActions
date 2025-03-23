@@ -66,8 +66,13 @@ jobs:
     runs-on: ubuntu-latest
     if: contains(inputs.target_modules, 'card-systems') && contains(inputs.action_type, 'build')
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
       - name: Build card-systems
-        uses: ./github/workflows/build-card-systems.yaml
+        uses: ./.github/workflows/build-card-systems.yaml
         with:
           tag_number: ${{ needs.generate_tag.outputs.tag_number }}
           environment: ${{ inputs.stg_env }}
@@ -77,8 +82,13 @@ jobs:
     runs-on: ubuntu-latest
     if: contains(inputs.target_modules, 'core') && contains(inputs.action_type, 'build')
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
       - name: Build core
-        uses: ./github/workflows/build-core.yaml
+        uses: ./.github/workflows/build-core.yaml
         with:
           tag_number: ${{ needs.generate_tag.outputs.tag_number }}
           environment: ${{ inputs.stg_env }}
@@ -88,8 +98,13 @@ jobs:
     runs-on: ubuntu-latest
     if: contains(inputs.target_modules, 'form') && contains(inputs.action_type, 'build')
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
       - name: Build form
-        uses: ./github/workflows/build-form.yaml
+        uses: ./.github/workflows/build-form.yaml
         with:
           tag_number: ${{ needs.generate_tag.outputs.tag_number }}
           environment: ${{ inputs.stg_env }}
@@ -99,8 +114,13 @@ jobs:
     runs-on: ubuntu-latest
     if: contains(inputs.target_modules, 'front') && contains(inputs.action_type, 'build')
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
       - name: Build front
-        uses: ./github/workflows/build-front.yaml
+        uses: ./.github/workflows/build-front.yaml
         with:
           tag_number: ${{ needs.generate_tag.outputs.tag_number }}
           environment: ${{ inputs.stg_env }}
@@ -110,8 +130,13 @@ jobs:
     runs-on: ubuntu-latest
     if: contains(inputs.target_modules, 'vue') && contains(inputs.action_type, 'build')
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
       - name: Build vue
-        uses: ./github/workflows/build-vue.yaml
+        uses: ./.github/workflows/build-vue.yaml
         with:
           tag_number: ${{ needs.generate_tag.outputs.tag_number }}
           environment: ${{ inputs.stg_env }}
@@ -121,8 +146,13 @@ jobs:
     runs-on: ubuntu-latest
     if: contains(inputs.target_modules, 'web') && contains(inputs.action_type, 'build')
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
       - name: Build web
-        uses: ./github/workflows/build-web.yaml
+        uses: ./.github/workflows/build-web.yaml
         with:
           tag_number: ${{ needs.generate_tag.outputs.tag_number }}
           environment: ${{ inputs.stg_env }}
@@ -132,8 +162,13 @@ jobs:
     runs-on: ubuntu-latest
     if: contains(inputs.target_modules, 'batch') && contains(inputs.action_type, 'build')
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
       - name: Build batch
-        uses: ./github/workflows/build-batch.yaml
+        uses: ./.github/workflows/build-batch.yaml
         with:
           tag_number: ${{ needs.generate_tag.outputs.tag_number }}
           environment: ${{ inputs.batch_stg_env }}
@@ -145,6 +180,11 @@ jobs:
       !failure() && 
       needs.generate_tag.result == 'success'
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
       - name: Get tag numbers
         id: get_tags
         run: |
@@ -174,28 +214,28 @@ jobs:
 
       - name: Deploy web
         if: contains(inputs.target_modules, 'web') && contains(inputs.action_type, 'deploy')
-        uses: ./github/workflows/deploy-web-vue-front-core.yaml
+        uses: ./.github/workflows/deploy-web-vue-front-core.yaml
         with:
           tag_number: ${{ steps.get_tags.outputs.web_tag }}
           environment: ${{ inputs.stg_env }}
 
       - name: Deploy vue
         if: contains(inputs.target_modules, 'vue') && contains(inputs.action_type, 'deploy')
-        uses: ./github/workflows/deploy-web-vue-front-core.yaml
+        uses: ./.github/workflows/deploy-web-vue-front-core.yaml
         with:
           tag_number: ${{ steps.get_tags.outputs.vue_tag }}
           environment: ${{ inputs.stg_env }}
 
       - name: Deploy front
         if: contains(inputs.target_modules, 'front') && contains(inputs.action_type, 'deploy')
-        uses: ./github/workflows/deploy-web-vue-front-core.yaml
+        uses: ./.github/workflows/deploy-web-vue-front-core.yaml
         with:
           tag_number: ${{ steps.get_tags.outputs.front_tag }}
           environment: ${{ inputs.stg_env }}
 
       - name: Deploy core
         if: contains(inputs.target_modules, 'core') && contains(inputs.action_type, 'deploy')
-        uses: ./github/workflows/deploy-web-vue-front-core.yaml
+        uses: ./.github/workflows/deploy-web-vue-front-core.yaml
         with:
           tag_number: ${{ steps.get_tags.outputs.core_tag }}
           environment: ${{ inputs.stg_env }}
@@ -207,9 +247,14 @@ jobs:
       !failure() && 
       needs.generate_tag.result == 'success'
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
       - name: Deploy form
         if: contains(inputs.target_modules, 'form') && contains(inputs.action_type, 'deploy')
-        uses: ./github/workflows/deploy-form.yaml
+        uses: ./.github/workflows/deploy-form.yaml
         with:
           tag_number: ${{ steps.get_tags.outputs.form_tag }}
           environment: ${{ inputs.stg_env }}
@@ -221,9 +266,14 @@ jobs:
       !failure() && 
       needs.generate_tag.result == 'success'
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
       - name: Deploy batch
         if: contains(inputs.target_modules, 'batch') && contains(inputs.action_type, 'deploy')
-        uses: ./github/workflows/deploy-batch.yaml
+        uses: ./.github/workflows/deploy-batch.yaml
         with:
           tag_number: ${{ steps.get_tags.outputs.batch_tag }}
           environment: ${{ inputs.stg_env }}
@@ -235,9 +285,14 @@ jobs:
       !failure() && 
       needs.generate_tag.result == 'success'
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
       - name: Deploy card-systems
         if: contains(inputs.target_modules, 'card-systems') && contains(inputs.action_type, 'deploy')
-        uses: ./github/workflows/deploy-card-systems.yaml
+        uses: ./.github/workflows/deploy-card-systems.yaml
         with:
           tag_number: ${{ steps.get_tags.outputs.card_systems_tag }}
           environment: ${{ inputs.stg_env }}
