@@ -120,9 +120,13 @@ jobs:
   deploy_web_vue_front_core:
     needs: [generate_tag, build_web, build_vue, build_front, build_core]
     if: |
-      !failure() && 
+      !failure() &&
       needs.generate_tag.result == 'success' &&
-      (contains(inputs.target_modules, 'web,vue,front,core') && contains(inputs.action_type, 'deploy'))
+      (contains(inputs.target_modules, 'web') ||
+        contains(inputs.target_modules, 'vue') ||
+        contains(inputs.target_modules, 'front') ||
+        contains(inputs.target_modules, 'core')) &&
+      contains(inputs.action_type, 'deploy')
     uses: ./.github/workflows/deploy-web-vue-front-core.yaml@main
     with:
       tag_numbers: ${{ inputs.tag_numbers }}
@@ -132,7 +136,7 @@ jobs:
   deploy_form:
     needs: [generate_tag, build_form]
     if: |
-      !failure() && 
+      !failure() &&
       needs.generate_tag.result == 'success' &&
       (contains(inputs.target_modules, 'form') && contains(inputs.action_type, 'deploy'))
     uses: ./.github/workflows/deploy-form.yaml@main
@@ -143,7 +147,7 @@ jobs:
   deploy_batch:
     needs: [generate_tag, build_batch]
     if: |
-      !failure() && 
+      !failure() &&
       needs.generate_tag.result == 'success' &&
       (contains(inputs.target_modules, 'batch') && contains(inputs.action_type, 'deploy'))
     uses: ./.github/workflows/deploy-batch.yaml@main
@@ -154,7 +158,7 @@ jobs:
   deploy_card_systems:
     needs: [generate_tag, build_card_systems]
     if: |
-      !failure() && 
+      !failure() &&
       needs.generate_tag.result == 'success' &&
       (contains(inputs.target_modules, 'card-systems') && contains(inputs.action_type, 'deploy'))
     uses: ./.github/workflows/deploy-card-systems.yaml@main
