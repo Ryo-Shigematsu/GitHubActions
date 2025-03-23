@@ -41,6 +41,17 @@ on:
         type: string
 
 jobs:
+  echo_inputs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Echo all inputs
+        run: |
+          echo "Selected modules: ${{ inputs.target_modules }}"
+          echo "Action type: ${{ inputs.action_type }}"
+          echo "Staging environment: ${{ inputs.stg_env }}"
+          echo "Batch staging environment: ${{ inputs.batch_stg_env }}"
+          echo "Tag numbers: ${{ inputs.tag_numbers }}"
+
   generate_tag:
     runs-on: ubuntu-latest
     outputs:
