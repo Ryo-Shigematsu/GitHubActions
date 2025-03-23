@@ -137,11 +137,29 @@ jobs:
       - name: Get tag numbers
         id: get_tags
         run: |
-          # Parse tag numbers from input
-          echo "web_tag=${{ fromJson(format('{{{{ {0} }}}}', contains(inputs.tag_numbers, 'web:') && split(split(inputs.tag_numbers, 'web:')[1], ',')[0] || needs.generate_tag.outputs.tag_number)) }}" >> $GITHUB_OUTPUT
-          echo "vue_tag=${{ fromJson(format('{{{{ {0} }}}}', contains(inputs.tag_numbers, 'vue:') && split(split(inputs.tag_numbers, 'vue:')[1], ',')[0] || needs.generate_tag.outputs.tag_number)) }}" >> $GITHUB_OUTPUT
-          echo "front_tag=${{ fromJson(format('{{{{ {0} }}}}', contains(inputs.tag_numbers, 'front:') && split(split(inputs.tag_numbers, 'front:')[1], ',')[0] || needs.generate_tag.outputs.tag_number)) }}" >> $GITHUB_OUTPUT
-          echo "core_tag=${{ fromJson(format('{{{{ {0} }}}}', contains(inputs.tag_numbers, 'core:') && split(split(inputs.tag_numbers, 'core:')[1], ',')[0] || needs.generate_tag.outputs.tag_number)) }}" >> $GITHUB_OUTPUT
+          # タグ番号を取得する関数
+          # 引数: モジュール名
+          # 戻り値: 指定されたタグ番号、または生成されたタグ番号
+          get_tag_number() {
+            local module=$1
+            local tag_numbers="${{ inputs.tag_numbers }}"
+            local default_tag="${{ needs.generate_tag.outputs.tag_number }}"
+            
+            # モジュール名:タグ番号 の形式で指定されているか確認
+            if [[ $tag_numbers == *"$module:"* ]]; then
+              # タグ番号を抽出 (例: "web:123,vue:456" から "123" を取得)
+              echo "$tag_numbers" | grep -o "$module:[^,]*" | cut -d':' -f2
+            else
+              # 指定がない場合はデフォルトのタグ番号を使用
+              echo "$default_tag"
+            fi
+          }
+
+          # 各モジュールのタグ番号を取得してoutputに設定
+          echo "web_tag=$(get_tag_number 'web')" >> $GITHUB_OUTPUT
+          echo "vue_tag=$(get_tag_number 'vue')" >> $GITHUB_OUTPUT
+          echo "front_tag=$(get_tag_number 'front')" >> $GITHUB_OUTPUT
+          echo "core_tag=$(get_tag_number 'core')" >> $GITHUB_OUTPUT
 
       - name: Deploy web
         if: contains(inputs.target_modules, 'web') && contains(inputs.action_type, 'deploy')
