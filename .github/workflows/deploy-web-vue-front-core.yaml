@@ -2,7 +2,10 @@ name: Deploy Web/Vue/Front/Core Module
 on:
   workflow_call:
     inputs:
-      tag_number:
+      tag_numbers:
+        required: false
+        type: string
+      default_tag:
         required: true
         type: string
       environment:
@@ -13,30 +16,57 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy web application
-        if: contains(inputs.web_action, 'deploy')
+      - name: Get tag numbers
+        id: get_tags
         run: |
-          echo "Deploying web application with tag: ${{ inputs.tag_number }}"
+          # タグ番号を取得する関数
+          # 引数: モジュール名
+          # 戻り値: 指定されたタグ番号、または生成されたタグ番号
+          get_tag_number() {
+            local module=$1
+            local tag_numbers="${{ inputs.tag_numbers }}"
+            local default_tag="${{ inputs.default_tag }}"
+            
+            # モジュール名:タグ番号 の形式で指定されているか確認
+            if [[ $tag_numbers == *"$module:"* ]]; then
+              # タグ番号を抽出 (例: "web:123,vue:456" から "123" を取得)
+              echo "$tag_numbers" | grep -o "$module:[^,]*" | cut -d':' -f2
+            else
+              # 指定がない場合はデフォルトのタグ番号を使用
+              echo "$default_tag"
+            fi
+          }
+
+          # 各モジュールのタグ番号を取得してoutputに設定
+          echo "web_tag=$(get_tag_number 'web')" >> $GITHUB_OUTPUT
+          echo "vue_tag=$(get_tag_number 'vue')" >> $GITHUB_OUTPUT
+          echo "front_tag=$(get_tag_number 'front')" >> $GITHUB_OUTPUT
+          echo "core_tag=$(get_tag_number 'core')" >> $GITHUB_OUTPUT
+
+      - name: Deploy web application
+        if: contains(inputs.target_modules, 'web')
+        run: |
+          echo "Deploying web application with tag: ${{ steps.get_tags.outputs.web_tag }}"
           echo "Target environment: ${{ inputs.environment }}"
           # 実際のデプロイ処理をここに実装
 
       - name: Deploy vue application
-        if: contains(inputs.vue_action, 'deploy')
+        if: contains(inputs.target_modules, 'vue')
         run: |
-          echo "Deploying vue application with tag: ${{ inputs.tag_number }}"
+          echo "Deploying vue application with tag: ${{ steps.get_tags.outputs.vue_tag }}"
           echo "Target environment: ${{ inputs.environment }}"
           # 実際のデプロイ処理をここに実装
 
       - name: Deploy front application
-        if: contains(inputs.front_action, 'deploy')
+        if: contains(inputs.target_modules, 'front')
         run: |
-          echo "Deploying front application with tag: ${{ inputs.tag_number }}"
+          echo "Deploying front application with tag: ${{ steps.get_tags.outputs.front_tag }}"
           echo "Target environment: ${{ inputs.environment }}"
           # 実際のデプロイ処理をここに実装
 
       - name: Deploy core application
-        if: contains(inputs.core_action, 'deploy')
+        if: contains(inputs.target_modules, 'core')
         run: |
-          echo "Deploying core application with tag: ${{ inputs.tag_number }}"
+          echo "Deploying core application with tag: ${{ steps.get_tags.outputs.core_tag }}"
           echo "Target environment: ${{ inputs.environment }}"
           # 実際のデプロイ処理をここに実装 
