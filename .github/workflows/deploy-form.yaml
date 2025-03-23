@@ -1,0 +1,19 @@
+name: Deploy Form Module
+on:
+  workflow_call:
+    inputs:
+      tag_number:
+        required: true
+        type: string
+      environment:
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Echo parameters
+        run: |
+          echo "Deploying form module with tag: ${{ inputs.tag_number }}"
+          echo "Target environment: ${{ inputs.environment }}" 

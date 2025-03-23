@@ -1,0 +1,42 @@
+name: Deploy Web/Vue/Front/Core Module
+on:
+  workflow_call:
+    inputs:
+      tag_number:
+        required: true
+        type: string
+      environment:
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy web application
+        if: contains(inputs.web_action, 'deploy')
+        run: |
+          echo "Deploying web application with tag: ${{ inputs.tag_number }}"
+          echo "Target environment: ${{ inputs.environment }}"
+          # 実際のデプロイ処理をここに実装
+
+      - name: Deploy vue application
+        if: contains(inputs.vue_action, 'deploy')
+        run: |
+          echo "Deploying vue application with tag: ${{ inputs.tag_number }}"
+          echo "Target environment: ${{ inputs.environment }}"
+          # 実際のデプロイ処理をここに実装
+
+      - name: Deploy front application
+        if: contains(inputs.front_action, 'deploy')
+        run: |
+          echo "Deploying front application with tag: ${{ inputs.tag_number }}"
+          echo "Target environment: ${{ inputs.environment }}"
+          # 実際のデプロイ処理をここに実装
+
+      - name: Deploy core application
+        if: contains(inputs.core_action, 'deploy')
+        run: |
+          echo "Deploying core application with tag: ${{ inputs.tag_number }}"
+          echo "Target environment: ${{ inputs.environment }}"
+          # 実際のデプロイ処理をここに実装 

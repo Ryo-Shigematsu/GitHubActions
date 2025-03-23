@@ -23,9 +23,9 @@ on:
           - build and deploy
           - build
           - deploy
-      vue_action:
+      web_action:
         type: choice
-        description: 'Vue action(If Build, Needs Front Build)'
+        description: 'Web action'
         required: true
         default: 'none'
         options:
@@ -33,9 +33,9 @@ on:
           - build and deploy
           - build
           - deploy
-      batch_action:
+      vue_action:
         type: choice
-        description: 'Batch action(If Build, Needs Core Build)'
+        description: 'Vue action(If Build, Needs Front Build)'
         required: true
         default: 'none'
         options:
@@ -53,15 +53,25 @@ jobs:
       - id: set-number
         run: echo "run_number=${{ github.run_number }}" >> $GITHUB_OUTPUT
 
-  front-build:
+  systems-build:
     needs: set-run-number
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Systems build process with run number ${{ needs.set-run-number.outputs.run_number }}"
+
+  front-build:
+    needs:
+      - set-run-number
+      - systems-build
     if: ${{ github.event.inputs.front_action == 'build' || github.event.inputs.front_action == 'build and deploy' }}
     runs-on: ubuntu-latest
     steps:
       - run: echo "Front build process with run number ${{ needs.set-run-number.outputs.run_number }}"
 
   core-build:
-    needs: set-run-number
+    needs:
+      - set-run-number
+      - systems-build
     if: ${{ github.event.inputs.core_action == 'build' || github.event.inputs.core_action == 'build and deploy' }}
     runs-on: ubuntu-latest
     steps:
@@ -74,15 +84,8 @@ jobs:
     steps:
       - run: echo "Vue build process with run number ${{ needs.set-run-number.outputs.run_number }}"
 
-  batch-build:
-    needs: [set-run-number, core-build]
-    if: ${{ github.event.inputs.batch_action == 'build' || github.event.inputs.batch_action == 'build and deploy' }}
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "Batch build process with run number ${{ needs.set-run-number.outputs.run_number }}"
-
   deploy:
-    needs: [set-run-number, front-build, core-build, vue-build, batch-build]
+    needs: [set-run-number, front-build, core-build, vue-build]
     if: ${{ ! failure() }}
     runs-on: ubuntu-latest
     steps:
@@ -97,8 +100,3 @@ jobs:
       - name: Deploy Vue
         if: ${{ github.event.inputs.vue_action == 'deploy' || github.event.inputs.vue_action == 'build and deploy' }}
         run: echo "Vue deploy process with run number ${{ needs.set-run-number.outputs.run_number }}"
-      
-      - name: Deploy Batch
-        if: ${{ github.event.inputs.batch_action == 'deploy' || github.event.inputs.batch_action == 'build and deploy' }}
-        run: echo "Vue deploy process with run number ${{ needs.set-run-number.outputs.run_number }}"
-
