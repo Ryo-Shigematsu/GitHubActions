@@ -3,81 +3,18 @@ name: Build and Deploy Modules
 on:
   workflow_dispatch:
     inputs:
-      modules:
-        description: 'Select modules to build/deploy'
+      target_modules:
+        description: 'Select modules to build/deploy (comma-separated: web,vue,front,core,form,batch,card-systems)'
         required: true
-        type: choice
-        options:
-          - web
-          - vue
-          - front
-          - core
-          - form
-          - batch
-          - card-systems
-      web_action:
-        description: 'web action'
+        type: string
+      action_type:
+        description: 'Action to perform'
         required: true
         type: choice
         options:
           - build
           - deploy
           - build-and-deploy
-          - skip
-      vue_action:
-        description: 'vue action'
-        required: true
-        type: choice
-        options:
-          - build
-          - deploy
-          - build-and-deploy
-          - skip
-      front_action:
-        description: 'front action'
-        required: true
-        type: choice
-        options:
-          - build
-          - deploy
-          - build-and-deploy
-          - skip
-      core_action:
-        description: 'core action'
-        required: true
-        type: choice
-        options:
-          - build
-          - deploy
-          - build-and-deploy
-          - skip
-      form_action:
-        description: 'form action'
-        required: true
-        type: choice
-        options:
-          - build
-          - deploy
-          - build-and-deploy
-          - skip
-      batch_action:
-        description: 'batch action'
-        required: true
-        type: choice
-        options:
-          - build
-          - deploy
-          - build-and-deploy
-          - skip
-      card_systems_action:
-        description: 'card-systems action'
-        required: true
-        type: choice
-        options:
-          - build
-          - deploy
-          - build-and-deploy
-          - skip
       stg_env:
         description: 'Select staging environment'
         required: true
@@ -90,49 +27,18 @@ on:
           - stg5
           - stg6
       batch_stg_env:
-        description: 'Select batch staging environment'
-        required: true
+        description: 'Select batch staging environment (only for batch module)'
+        required: false
         type: choice
         options:
           - stg1
           - stg2
           - stg3
           - stg4
-      web_tag_number:
-        description: 'Tag number for web deployment (if deploy only)'
+      tag_numbers:
+        description: 'Tag numbers for deployment (format: module:tag,module:tag e.g., web:123,vue:456)'
         required: false
         type: string
-        default: ''
-      vue_tag_number:
-        description: 'Tag number for vue deployment (if deploy only)'
-        required: false
-        type: string
-        default: ''
-      front_tag_number:
-        description: 'Tag number for front deployment (if deploy only)'
-        required: false
-        type: string
-        default: ''
-      core_tag_number:
-        description: 'Tag number for core deployment (if deploy only)'
-        required: false
-        type: string
-        default: ''
-      form_tag_number:
-        description: 'Tag number for form deployment (if deploy only)'
-        required: false
-        type: string
-        default: ''
-      batch_tag_number:
-        description: 'Tag number for batch deployment (if deploy only)'
-        required: false
-        type: string
-        default: ''
-      card_systems_tag_number:
-        description: 'Tag number for card-systems deployment (if deploy only)'
-        required: false
-        type: string
-        default: ''
 
 jobs:
   generate_tag:
@@ -147,7 +53,7 @@ jobs:
   build_card_systems:
     needs: generate_tag
     runs-on: ubuntu-latest
-    if: contains(inputs.card_systems_action, 'build')
+    if: contains(inputs.target_modules, 'card-systems') && contains(inputs.action_type, 'build')
     steps:
       - name: Build card-systems
         uses: ./workflows/build-card-systems.yaml
@@ -158,7 +64,7 @@ jobs:
   build_core:
     needs: [generate_tag, build_card_systems]
     runs-on: ubuntu-latest
-    if: contains(inputs.core_action, 'build')
+    if: contains(inputs.target_modules, 'core') && contains(inputs.action_type, 'build')
     steps:
       - name: Build core
         uses: ./workflows/build-core.yaml
@@ -169,7 +75,7 @@ jobs:
   build_form:
     needs: [generate_tag, build_core]
     runs-on: ubuntu-latest
-    if: contains(inputs.form_action, 'build')
+    if: contains(inputs.target_modules, 'form') && contains(inputs.action_type, 'build')
     steps:
       - name: Build form
         uses: ./workflows/build-form.yaml
@@ -180,7 +86,7 @@ jobs:
   build_front:
     needs: [generate_tag, build_card_systems]
     runs-on: ubuntu-latest
-    if: contains(inputs.front_action, 'build')
+    if: contains(inputs.target_modules, 'front') && contains(inputs.action_type, 'build')
     steps:
       - name: Build front
         uses: ./workflows/build-front.yaml
@@ -191,7 +97,7 @@ jobs:
   build_vue:
     needs: generate_tag
     runs-on: ubuntu-latest
-    if: contains(inputs.vue_action, 'build')
+    if: contains(inputs.target_modules, 'vue') && contains(inputs.action_type, 'build')
     steps:
       - name: Build vue
         uses: ./workflows/build-vue.yaml
@@ -202,7 +108,7 @@ jobs:
   build_web:
     needs: generate_tag
     runs-on: ubuntu-latest
-    if: contains(inputs.web_action, 'build')
+    if: contains(inputs.target_modules, 'web') && contains(inputs.action_type, 'build')
     steps:
       - name: Build web
         uses: ./workflows/build-web.yaml
@@ -213,7 +119,7 @@ jobs:
   build_batch:
     needs: [generate_tag, build_card_systems]
     runs-on: ubuntu-latest
-    if: contains(inputs.batch_action, 'build')
+    if: contains(inputs.target_modules, 'batch') && contains(inputs.action_type, 'build')
     steps:
       - name: Build batch
         uses: ./workflows/build-batch.yaml
@@ -226,34 +132,43 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       !failure() && 
-      needs.generate_tag.result == 'success'  # タグ番号は必須なのでgenerate_tagは必ず成功している必要がある
+      needs.generate_tag.result == 'success'
     steps:
+      - name: Get tag numbers
+        id: get_tags
+        run: |
+          # Parse tag numbers from input
+          echo "web_tag=${{ fromJson(format('{{{{ {0} }}}}', contains(inputs.tag_numbers, 'web:') && split(split(inputs.tag_numbers, 'web:')[1], ',')[0] || needs.generate_tag.outputs.tag_number)) }}" >> $GITHUB_OUTPUT
+          echo "vue_tag=${{ fromJson(format('{{{{ {0} }}}}', contains(inputs.tag_numbers, 'vue:') && split(split(inputs.tag_numbers, 'vue:')[1], ',')[0] || needs.generate_tag.outputs.tag_number)) }}" >> $GITHUB_OUTPUT
+          echo "front_tag=${{ fromJson(format('{{{{ {0} }}}}', contains(inputs.tag_numbers, 'front:') && split(split(inputs.tag_numbers, 'front:')[1], ',')[0] || needs.generate_tag.outputs.tag_number)) }}" >> $GITHUB_OUTPUT
+          echo "core_tag=${{ fromJson(format('{{{{ {0} }}}}', contains(inputs.tag_numbers, 'core:') && split(split(inputs.tag_numbers, 'core:')[1], ',')[0] || needs.generate_tag.outputs.tag_number)) }}" >> $GITHUB_OUTPUT
+
       - name: Deploy web
-        if: contains(inputs.web_action, 'deploy')
+        if: contains(inputs.target_modules, 'web') && contains(inputs.action_type, 'deploy')
         uses: ./workflows/deploy-web-vue-front-core.yaml
         with:
-          tag_number: ${{ inputs.web_action == 'deploy' && inputs.web_tag_number || needs.generate_tag.outputs.tag_number }}
+          tag_number: ${{ steps.get_tags.outputs.web_tag }}
           environment: ${{ inputs.stg_env }}
 
       - name: Deploy vue
-        if: contains(inputs.vue_action, 'deploy')
+        if: contains(inputs.target_modules, 'vue') && contains(inputs.action_type, 'deploy')
         uses: ./workflows/deploy-web-vue-front-core.yaml
         with:
-          tag_number: ${{ inputs.vue_action == 'deploy' && inputs.vue_tag_number || needs.generate_tag.outputs.tag_number }}
+          tag_number: ${{ steps.get_tags.outputs.vue_tag }}
           environment: ${{ inputs.stg_env }}
 
       - name: Deploy front
-        if: contains(inputs.front_action, 'deploy')
+        if: contains(inputs.target_modules, 'front') && contains(inputs.action_type, 'deploy')
         uses: ./workflows/deploy-web-vue-front-core.yaml
         with:
-          tag_number: ${{ inputs.front_action == 'deploy' && inputs.front_tag_number || needs.generate_tag.outputs.tag_number }}
+          tag_number: ${{ steps.get_tags.outputs.front_tag }}
           environment: ${{ inputs.stg_env }}
 
       - name: Deploy core
-        if: contains(inputs.core_action, 'deploy')
+        if: contains(inputs.target_modules, 'core') && contains(inputs.action_type, 'deploy')
         uses: ./workflows/deploy-web-vue-front-core.yaml
         with:
-          tag_number: ${{ inputs.core_action == 'deploy' && inputs.core_tag_number || needs.generate_tag.outputs.tag_number }}
+          tag_number: ${{ steps.get_tags.outputs.core_tag }}
           environment: ${{ inputs.stg_env }}
 
   deploy_form:
@@ -264,10 +179,10 @@ jobs:
       needs.generate_tag.result == 'success'
     steps:
       - name: Deploy form
-        if: contains(inputs.form_action, 'deploy')
+        if: contains(inputs.target_modules, 'form') && contains(inputs.action_type, 'deploy')
         uses: ./workflows/deploy-form.yaml
         with:
-          tag_number: ${{ inputs.form_action == 'deploy' && inputs.form_tag_number || needs.generate_tag.outputs.tag_number }}
+          tag_number: ${{ steps.get_tags.outputs.form_tag }}
           environment: ${{ inputs.stg_env }}
 
   deploy_batch:
@@ -278,11 +193,11 @@ jobs:
       needs.generate_tag.result == 'success'
     steps:
       - name: Deploy batch
-        if: contains(inputs.batch_action, 'deploy')
+        if: contains(inputs.target_modules, 'batch') && contains(inputs.action_type, 'deploy')
         uses: ./workflows/deploy-batch.yaml
         with:
-          tag_number: ${{ inputs.batch_action == 'deploy' && inputs.batch_tag_number || needs.generate_tag.outputs.tag_number }}
-          environment: ${{ inputs.batch_stg_env }}
+          tag_number: ${{ steps.get_tags.outputs.batch_tag }}
+          environment: ${{ inputs.stg_env }}
 
   deploy_card_systems:
     needs: [generate_tag, build_card_systems]
@@ -292,8 +207,8 @@ jobs:
       needs.generate_tag.result == 'success'
     steps:
       - name: Deploy card-systems
-        if: contains(inputs.card_systems_action, 'deploy')
+        if: contains(inputs.target_modules, 'card-systems') && contains(inputs.action_type, 'deploy')
         uses: ./workflows/deploy-card-systems.yaml
         with:
-          tag_number: ${{ inputs.card_systems_action == 'deploy' && inputs.card_systems_tag_number || needs.generate_tag.outputs.tag_number }}
+          tag_number: ${{ steps.get_tags.outputs.card_systems_tag }}
           environment: ${{ inputs.stg_env }}
