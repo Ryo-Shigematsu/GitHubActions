@@ -1,4 +1,4 @@
-name: [Manual] Build and Deploy All Modules
+name: '[Manual] Build and Deploy All Modules'
 
 on:
   workflow_dispatch:
