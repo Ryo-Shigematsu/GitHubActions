@@ -36,7 +36,11 @@ on:
           - stg3
           - stg4
       tag_numbers:
-        description: 'Tag numbers for deployment (format: module:tag,module:tag e.g., web:123,vue:456)'
+        description: 'Tag numbers for Harbor images (format: module:tag,module:tag e.g., web:123,vue:456)'
+        required: false
+        type: string
+      form_artifact_tag:
+        description: 'Tag number for Form module in JFrog'
         required: false
         type: string
 
@@ -51,6 +55,7 @@ jobs:
           echo "Staging environment: ${{ inputs.stg_env }}"
           echo "Batch staging environment: ${{ inputs.batch_stg_env }}"
           echo "Tag numbers: ${{ inputs.tag_numbers }}"
+          echo "Form artifact tag: ${{ inputs.form_artifact_tag }}"
 
   generate_tag:
     runs-on: ubuntu-latest
@@ -90,7 +95,7 @@ jobs:
     if: |
       contains(inputs.target_modules, 'form') && 
       contains(inputs.action_type, 'build') &&
-      !contains(inputs.tag_numbers, 'form:')
+      inputs.form_artifact_tag == ''
     uses: ./.github/workflows/build-form.yaml
     with:
       tag_number: ${{ needs.generate_tag.outputs.tag_number }}
@@ -159,12 +164,12 @@ jobs:
   deploy_form:
     needs: [generate_tag, build_form]
     if: |
-      !failure() &&
+      !failure() && 
       needs.generate_tag.result == 'success' &&
       (contains(inputs.target_modules, 'form') && contains(inputs.action_type, 'deploy'))
     uses: ./.github/workflows/deploy-form.yaml
     with:
-      tag_number: ${{ inputs.form_action == 'deploy' && inputs.form_tag_number || needs.generate_tag.outputs.tag_number }}
+      tag_number: ${{ inputs.form_artifact_tag != '' && inputs.form_artifact_tag || needs.generate_tag.outputs.tag_number }}
       environment: ${{ inputs.stg_env }}
 
   deploy_batch:
