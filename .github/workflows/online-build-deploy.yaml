@@ -1,0 +1,146 @@
+name: '[Manual] Build and Deploy All Modules'
+
+on:
+  workflow_dispatch:
+    inputs:
+      card_apply_branch:
+        description: 'Card Apply Branch (format: prototype/apply/stg1/XXX)'
+        required: true
+        type: string
+      card_systems_branch:
+        description: 'Card Systems Branch'
+        required: true
+        type: string
+        default: 'master'
+      target_modules:
+        description: 'Select modules to build/deploy (comma-separated: web,vue,front,core)'
+        required: true
+        type: string
+      action_type:
+        description: 'Action to perform'
+        required: true
+        type: choice
+        options:
+          - build
+          - deploy
+          - build-and-deploy
+      tag_numbers:
+        description: 'Tag numbers for Harbor images (format: module:tag,module:tag e.g., web:123,vue:456)'
+        required: false
+        type: string
+      nodejs_version:
+        description: 'Node.js version'
+        required: true
+        type: choice
+        options:
+          - '16.x'
+          - '18.x'
+
+jobs:
+  echo_inputs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Echo all inputs
+        run: |
+          echo "Card Apply Branch: ${{ inputs.card_apply_branch }}"
+          echo "Card Systems Branch: ${{ inputs.card_systems_branch }}"
+          echo "Selected modules: ${{ inputs.target_modules }}"
+          echo "Action type: ${{ inputs.action_type }}"
+          echo "Tag numbers: ${{ inputs.tag_numbers }}"
+          echo "Node.js version: ${{ inputs.nodejs_version }}"
+
+  get_environment:
+    runs-on: ubuntu-latest
+    outputs:
+      env: ${{ steps.get_envt.outputs.env }}
+    steps:
+      - name: Extract environment from branch name
+        id: get_envt
+        run: |
+          BRANCH="${{ inputs.card_apply_branch }}"
+          ENV=$(echo $BRANCH | grep -oP 'stg[1-6]' || echo '')
+          echo "env=$ENV" >> $GITHUB_OUTPUT
+
+  generate_tag:
+    needs: get_environment
+    runs-on: ubuntu-latest
+    outputs:
+      tag_number: ${{ steps.tag_generation.outputs.tag_number }}
+    steps:
+      - name: Generate tag number
+        id: tag_generation
+        run: echo "tag_number=${{ github.run_number }}" >> $GITHUB_OUTPUT
+
+  build_card_systems:
+    needs: [generate_tag, get_environment]
+    if: needs.generate_tag.result == 'success'
+    uses: ./.github/workflows/build-card-systems.yaml
+    with:
+      tag_number: ${{ needs.generate_tag.outputs.tag_number }}
+      branch: ${{ inputs.card_systems_branch }}
+      environment: ${{ needs.get_environment.outputs.env }}
+
+  build_core:
+    needs: [generate_tag, build_card_systems, get_environment]
+    if: |
+      contains(inputs.target_modules, 'core') && 
+      contains(inputs.action_type, 'build') &&
+      !contains(inputs.tag_numbers, 'core:')
+    uses: ./.github/workflows/build-core.yaml
+    with:
+      tag_number: ${{ needs.generate_tag.outputs.tag_number }}
+      environment: ${{ needs.get_environment.outputs.env }}
+      card_apply_branch: ${{ inputs.card_apply_branch }}
+
+  build_front:
+    needs: [generate_tag, build_card_systems, get_environment]
+    if: |
+      contains(inputs.target_modules, 'front') && 
+      contains(inputs.action_type, 'build') &&
+      !contains(inputs.tag_numbers, 'front:')
+    uses: ./.github/workflows/build-front.yaml
+    with:
+      tag_number: ${{ needs.generate_tag.outputs.tag_number }}
+      environment: ${{ needs.get_environment.outputs.env }}
+      card_apply_branch: ${{ inputs.card_apply_branch }}
+
+  build_vue:
+    needs: [generate_tag, get_environment]
+    if: |
+      contains(inputs.target_modules, 'vue') && 
+      contains(inputs.action_type, 'build') &&
+      !contains(inputs.tag_numbers, 'vue:')
+    uses: ./.github/workflows/build-vue.yaml
+    with:
+      tag_number: ${{ needs.generate_tag.outputs.tag_number }}
+      environment: ${{ needs.get_environment.outputs.env }}
+      card_apply_branch: ${{ inputs.card_apply_branch }}
+      nodejs_version: ${{ inputs.nodejs_version }}
+
+  build_web:
+    needs: [generate_tag, get_environment]
+    if: |
+      contains(inputs.target_modules, 'web') && 
+      contains(inputs.action_type, 'build') &&
+      !contains(inputs.tag_numbers, 'web:')
+    uses: ./.github/workflows/build-web.yaml
+    with:
+      tag_number: ${{ needs.generate_tag.outputs.tag_number }}
+      environment: ${{ needs.get_environment.outputs.env }}
+      card_apply_branch: ${{ inputs.card_apply_branch }}
+
+  deploy_web_vue_front_core:
+    needs: [generate_tag, build_web, build_vue, build_front, build_core, get_environment]
+    if: |
+      !failure() &&
+      needs.generate_tag.result == 'success' &&
+      (contains(inputs.target_modules, 'web') ||
+        contains(inputs.target_modules, 'vue') ||
+        contains(inputs.target_modules, 'front') ||
+        contains(inputs.target_modules, 'core')) &&
+      contains(inputs.action_type, 'deploy')
+    uses: ./.github/workflows/deploy-web-vue-front-core.yaml
+    with:
+      tag_numbers: ${{ inputs.tag_numbers }}
+      default_tag: ${{ needs.generate_tag.outputs.tag_number }}
+      environment: ${{ needs.get_environment.outputs.env }}
