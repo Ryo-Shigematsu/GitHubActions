@@ -64,7 +64,6 @@ jobs:
   build_card_systems:
     needs: generate_tag
     if: |
-      # !failure() &&
       contains(inputs.action_type, 'build')
     uses: ./.github/workflows/build-card-systems.yaml
     with:
@@ -74,7 +73,6 @@ jobs:
   build_batch:
     needs: [generate_tag, get_environment, build_card_systems]
     if: |
-      # !failure() &&
       contains(inputs.action_type, 'build')
     uses: ./.github/workflows/build-batch.yaml
     with:
