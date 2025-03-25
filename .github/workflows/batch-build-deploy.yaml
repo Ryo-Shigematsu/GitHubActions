@@ -38,16 +38,16 @@ jobs:
           echo "Tag numbers: ${{ inputs.tag_numbers }}"
 
   get_environment:
-  runs-on: ubuntu-latest
-  outputs:
-    env: ${{ steps.get_envt.outputs.env }}
-  steps:
-    - name: Extract environment from branch name
-      id: get_envt
-      run: |
-        BRANCH="${{ inputs.card_apply_batch_branch }}"
-        ENV=$(echo $BRANCH | grep -oP 'stg[1-4]' || echo '')
-        echo "env=$ENV" >> $GITHUB_OUTPUT
+    runs-on: ubuntu-latest
+    outputs:
+      env: ${{ steps.get_envt.outputs.env }}
+    steps:
+      - name: Extract environment from branch name
+        id: get_envt
+        run: |
+          BRANCH="${{ inputs.card_apply_batch_branch }}"
+          ENV=$(echo $BRANCH | grep -oP 'stg[1-4]' || echo '')
+          echo "env=$ENV" >> $GITHUB_OUTPUT
 
   generate_tag:
     needs: get_environment
@@ -60,13 +60,13 @@ jobs:
         run: echo "tag_number=${{ github.run_number }}" >> $GITHUB_OUTPUT
   
   build_card_systems:
-  needs: [generate_tag, get_environment]
-  if: needs.generate_tag.result == 'success'
-  uses: ./.github/workflows/build-card-systems.yaml
-  with:
-    tag_number: ${{ needs.generate_tag.outputs.tag_number }}
-    branch: ${{ inputs.card_systems_branch }}
-    environment: ${{ needs.get_environment.outputs.env }}
+    needs: [generate_tag, get_environment]
+    if: needs.generate_tag.result == 'success'
+    uses: ./.github/workflows/build-card-systems.yaml
+    with:
+      tag_number: ${{ needs.generate_tag.outputs.tag_number }}
+      branch: ${{ inputs.card_systems_branch }}
+      environment: ${{ needs.get_environment.outputs.env }}
 
   build_batch:
     needs: [generate_tag, build_card_systems]
