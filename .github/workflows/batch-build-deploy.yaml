@@ -51,6 +51,9 @@ jobs:
 
   generate_tag:
     needs: get_environment
+    if: |
+      contains(inputs.action_type, 'build') &&
+      inputs.tag_number == ''
     runs-on: ubuntu-latest
     outputs:
       tag_number: ${{ steps.tag_generation.outputs.tag_number }}
@@ -61,7 +64,8 @@ jobs:
   
   build_card_systems:
     needs: generate_tag
-    if: needs.generate_tag.result == 'success'
+    if: needs.generate_tag.result == 'success' &&
+        inputs.tag_number == ''
     uses: ./.github/workflows/build-card-systems.yaml
     with:
       tag_number: ${{ needs.generate_tag.outputs.tag_number }}
@@ -71,7 +75,7 @@ jobs:
     needs: [generate_tag, get_environment, build_card_systems]
     if: |
       contains(inputs.action_type, 'build') &&
-      !contains(inputs.tag_number, 'batch:')
+      inputs.tag_number == ''
     uses: ./.github/workflows/build-batch.yaml
     with:
       tag_number: ${{ needs.generate_tag.outputs.tag_number }}
