@@ -49,6 +49,7 @@ jobs:
           echo "Tag numbers: ${{ inputs.tag_numbers }}"
           echo "Node.js version: ${{ inputs.nodejs_version }}"
 
+# この辺の実装は自由
   get_environment:
     runs-on: ubuntu-latest
     outputs:
@@ -72,7 +73,7 @@ jobs:
         run: echo "tag_number=${{ github.run_number }}" >> $GITHUB_OUTPUT
 
   build_card_systems:
-    needs: [generate_tag, get_environment]
+    needs: generate_tag
     if: needs.generate_tag.result == 'success'
     uses: ./.github/workflows/build-card-systems.yaml
     with:
