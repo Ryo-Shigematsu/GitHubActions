@@ -60,16 +60,15 @@ jobs:
         run: echo "tag_number=${{ github.run_number }}" >> $GITHUB_OUTPUT
   
   build_card_systems:
-    needs: [generate_tag, get_environment]
+    needs: generate_tag
     if: needs.generate_tag.result == 'success'
     uses: ./.github/workflows/build-card-systems.yaml
     with:
       tag_number: ${{ needs.generate_tag.outputs.tag_number }}
       branch: ${{ inputs.card_systems_branch }}
-      environment: ${{ needs.get_environment.outputs.env }}
 
   build_batch:
-    needs: [generate_tag, build_card_systems]
+    needs: [generate_tag, get_environment, build_card_systems]
     if: |
       contains(inputs.action_type, 'build') &&
       !contains(inputs.tag_numbers, 'batch:')
@@ -80,7 +79,7 @@ jobs:
       card_apply_batch_branch: ${{ inputs.card_apply_batch_branch }}
 
   deploy_batch:
-    needs: [generate_tag, build_batch]
+    needs: [generate_tag, get_environment, build_batch]
     if: |
       !failure() &&
       needs.generate_tag.result == 'success' &&
