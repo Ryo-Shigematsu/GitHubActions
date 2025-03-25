@@ -5,7 +5,7 @@ on:
       tag_number:
         required: true
         type: string
-      branch:
+      card_apply_branch:
         required: true
         type: string
       environment:
@@ -19,5 +19,5 @@ jobs:
       - name: Echo parameters
         run: |
           echo "Building web module with tag: ${{ inputs.tag_number }}"
-          echo "Branch: ${{ inputs.branch }}"
+          echo "Branch: ${{ inputs.card_apply_branch }}"
           echo "Target environment: ${{ inputs.environment }}" 
