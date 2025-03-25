@@ -8,6 +8,9 @@ on:
       environment:
         required: true
         type: string
+      card_apply_batch_branch:
+        required: true
+        type: string
 
 jobs:
   build:
@@ -17,3 +20,4 @@ jobs:
         run: |
           echo "Building batch module with tag: ${{ inputs.tag_number }}"
           echo "Target environment: ${{ inputs.environment }}" 
+          echo "Branch: ${{ inputs.card_apply_batch_branch }}" 
