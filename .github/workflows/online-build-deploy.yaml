@@ -78,7 +78,6 @@ jobs:
     with:
       tag_number: ${{ needs.generate_tag.outputs.tag_number }}
       branch: ${{ inputs.card_systems_branch }}
-      environment: ${{ needs.get_environment.outputs.env }}
 
   build_core:
     needs: [generate_tag, build_card_systems, get_environment]
