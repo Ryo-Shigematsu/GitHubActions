@@ -84,7 +84,7 @@ jobs:
     if: |
       !failure() &&
       needs.generate_tag.result == 'success' &&
-      (contains(inputs.target_modules, 'batch') && contains(inputs.action_type, 'deploy'))
+      contains(inputs.action_type, 'deploy')
     uses: ./.github/workflows/deploy-batch.yaml
     with:
       tag_number: ${{ inputs.batch_action == 'deploy' && inputs.batch_tag_number || needs.generate_tag.outputs.tag_number }}
