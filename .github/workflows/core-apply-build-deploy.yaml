@@ -1,0 +1,47 @@
+name: '[Manual] Build and Deploy All Modules'
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_modules:
+        description: 'Select modules to build/deploy (comma-separated: web,vue,front,core,form,batch,card-systems)'
+        required: true
+        type: string
+      action_type:
+        description: 'Action to perform'
+        required: true
+        type: choice
+        options:
+          - build
+          - deploy
+          - build-and-deploy
+      stg_env:
+        description: 'Select staging environment'
+        required: true
+        type: choice
+        options:
+          - stg1
+          - stg2
+          - stg3
+          - stg4
+          - stg5
+          - stg6
+      batch_stg_env:
+        description: 'Select batch staging environment (only for batch module)'
+        required: false
+        type: choice
+        options:
+          - stg1
+          - stg2
+          - stg3
+          - stg4
+      tag_numbers:
+        description: 'Tag numbers for Harbor images (format: module:tag,module:tag e.g., web:123,vue:456)'
+        required: false
+        type: string
+      form_artifact_tag:
+        description: 'Tag number for Form module in JFrog'
+        required: false
+        type: string
+
+// ... existing code ... 
