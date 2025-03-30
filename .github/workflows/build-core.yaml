@@ -16,6 +16,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Wait for 3 minutes
+        run: sleep 180
+        
       - name: Echo parameters
         run: |
           echo "Building core module with tag: ${{ inputs.tag_number }}"
