@@ -1,0 +1,67 @@
+name: Delete Old Branches
+
+on:
+  schedule:
+    - cron: '0 0 1 * *' # 毎月1日 0:00 UTC
+
+jobs:
+  delete-old-branches:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Git user
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@users.noreply.github.com"
+
+      - name: Fetch all branches
+        run: git fetch --prune --all
+
+      - name: Get candidate branches (exclude master/prototype/apply/*/etc)
+        id: get_branches
+        run: |
+          # 除外パターンをここで定義（必要に応じて拡張）
+          EXCLUDE_PATTERNS="master|prototype/apply/.*|develop/apply/.*|feature/apply/.*"
+          # ローカルで全てのリモートブランチ名を取得
+          git branch -r | sed 's/origin\///' | grep -vE "${EXCLUDE_PATTERNS}" | sort > candidate-branches.txt
+
+      - name: Download protected-branches.txt
+        run: |
+          if [ -f protected-branches.txt ]; then
+            cp protected-branches.txt protected-branches-list.txt
+          else
+            touch protected-branches-list.txt
+          fi
+
+      - name: Filter protected branches
+        id: filter_protected
+        run: |
+          # 除外リストに載っていないブランチのみ抽出
+          grep -vxFf protected-branches-list.txt candidate-branches.txt > filtered-branches.txt
+
+      - name: Select branches older than 3 months
+        id: select_old
+        run: |
+          cutoff_date=$(date -d '-3 months' +%s)
+          rm -f old-branches.txt
+          while read branch; do
+            last_commit=$(git log -1 --pretty="format:%ct" origin/$branch 2>/dev/null || echo "")
+            if [ -n "$last_commit" ] && [ "$last_commit" -lt "$cutoff_date" ]; then
+              echo "$branch" >> old-branches.txt
+            fi
+          done < filtered-branches.txt
+
+      - name: Delete old branches
+        run: |
+          if [ -s old-branches.txt ]; then
+            while read branch; do
+              echo "Deleting branch: $branch"
+              git push origin --delete "$branch"
+            done < old-branches.txt
+          else
+            echo "No branches to delete."
+          fi
