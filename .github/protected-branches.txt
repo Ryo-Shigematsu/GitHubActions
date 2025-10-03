@@ -1,0 +1,5 @@
+master
+prototype/apply/example
+develop/apply/example
+feature/apply/example
+# 他、削除不可ブランチをここに記載
