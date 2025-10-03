@@ -1,0 +1,60 @@
+name: Notify Branch Deletion Candidates
+
+on:
+  schedule:
+    - cron: '0 0 25 * *' # 毎月25日 0:00 UTC（削除の1週間前）
+
+jobs:
+  notify-branch-deletion:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch all branches
+        run: git fetch --prune --all
+
+      - name: Get candidate branches (exclude master/prototype/apply/*/etc)
+        run: |
+          EXCLUDE_PATTERNS="master|prototype/apply/.*|develop/apply/.*|feature/apply/.*"
+          git branch -r | sed 's/origin\///' | grep -vE "${EXCLUDE_PATTERNS}" | sort > candidate-branches.txt
+
+      - name: Download protected-branches.txt
+        run: |
+          if [ -f protected-branches.txt ]; then
+            cp protected-branches.txt protected-branches-list.txt
+          else
+            touch protected-branches-list.txt
+          fi
+
+      - name: Filter protected branches
+        run: grep -vxFf protected-branches-list.txt candidate-branches.txt > filtered-branches.txt
+
+      - name: Select branches older than 3 months
+        run: |
+          cutoff_date=$(date -d '-3 months' +%s)
+          rm -f old-branches.txt
+          while read branch; do
+            last_commit=$(git log -1 --pretty="format:%ct" origin/$branch 2>/dev/null || echo "")
+            if [ -n "$last_commit" ] && [ "$last_commit" -lt "$cutoff_date" ]; then
+              echo "$branch" >> old-branches.txt
+            fi
+          done < filtered-branches.txt
+
+      - name: Notify Teams (sample)
+        env:
+          # TEAMS_WEBHOOK: ${{ secrets.TEAMS_WEBHOOK }}
+          TEAMS_WEBHOOK: ""
+        run: |
+          if [ -s old-branches.txt ]; then
+            MESSAGE="【通知】来月ブランチ削除予定の一覧:\n$(cat old-branches.txt | sed ':a;N;$!ba;s/\n/\\n/g')"
+            if [ -n "$TEAMS_WEBHOOK" ]; then
+              curl -H "Content-Type: application/json" -d "{\"text\": \"$MESSAGE\"}" "$TEAMS_WEBHOOK"
+            else
+              echo "Teams通知サンプル:\n$MESSAGE"
+              echo "※Webhook URLが未設定です。"
+            fi
+          else
+            echo "削除予定ブランチはありません。"
